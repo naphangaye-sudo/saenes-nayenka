@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#091520"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Coach SAENES — Nayenka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c8880a; --gold-light: #e0a020;
+      --navy: #142847; --navy2: #1a3a70;
+      --bg: #091520; --bg2: #112030;
+      --text: #ccdae8; --text-dim: #5a7898;
+      --bubble-ai: rgba(255,255,255,0.06);
+      --bubble-user: linear-gradient(135deg,#1a3a70,#122858);
+      --font: 'Lora', Georgia, serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    html, body { height:100%; overflow:hidden; background:var(--bg); font-family:var(--font); color:var(--text); -webkit-font-smoothing:antialiased; }
+    #app { height:100dvh; display:flex; flex-direction:column; background:linear-gradient(155deg,#091520 0%,#112030 55%,#080f18 100%); }
+
+    /* HEADER */
+    #header { background:linear-gradient(90deg,var(--navy),var(--navy2)); padding:11px 16px; border-bottom:3px solid var(--gold); display:flex; align-items:center; gap:11px; flex-shrink:0; box-shadow:0 3px 20px rgba(0,0,0,0.6); }
+    #header-logo { width:42px;height:42px; background:linear-gradient(135deg,var(--gold),#a06800); border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:19px;flex-shrink:0; box-shadow:0 0 0 3px rgba(200,136,10,0.25); }
+    #header-info { flex:1;min-width:0; }
+    #header-label { color:var(--gold);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono); }
+    #header-name { color:#dce8f5;font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    #header-sub { color:var(--text-dim);font-size:10px; }
+    #voice-badge { display:flex;align-items:center;gap:5px;flex-shrink:0; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px;padding:4px 10px;transition:all 0.3s; }
+    #voice-badge.active { background:rgba(200,136,10,0.18);border-color:rgba(200,136,10,0.55); }
+    #voice-dot { width:6px;height:6px;border-radius:50%;background:#2a4a68;transition:all 0.3s; }
+    #voice-badge.active #voice-dot { background:var(--gold);box-shadow:0 0 7px var(--gold); }
+    #voice-label { color:var(--text-dim);font-size:9px;font-family:var(--mono); }
+    #voice-badge.active #voice-label { color:var(--gold); }
+
+    /* TABS */
+    #tabs { display:flex;background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0; }
+    .tab { flex:1;padding:9px 4px;border:none;background:transparent;color:var(--text-dim);font-size:12px;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;font-family:var(--font); }
+    .tab.active { background:rgba(26,58,112,0.5);color:var(--gold);border-bottom-color:var(--gold);font-weight:700; }
+
+    /* PANELS */
+    .panel { display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0; }
+    .panel.active { display:flex; }
+
+    /* CHAT */
+    #error-bar { display:none;background:rgba(200,40,40,0.18);border-bottom:1px solid rgba(200,40,40,0.4);padding:7px 14px;justify-content:space-between;align-items:center;flex-shrink:0; }
+    #error-bar.visible { display:flex; }
+    #error-text { color:#f87171;font-size:11px;font-family:var(--mono);word-break:break-all; }
+    #error-close { background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;flex-shrink:0;padding:0 4px; }
+    #messages { flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:12px; }
+    .msg-row { display:flex;gap:7px;align-items:flex-start; }
+    .msg-row.user { justify-content:flex-end; }
+    .avatar { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:3px; }
+    .avatar.ai { background:linear-gradient(135deg,var(--gold),#a06800); }
+    .avatar.user { background:linear-gradient(135deg,#4a1880,#360f60); }
+    .msg-group { max-width:82%;display:flex;flex-direction:column;gap:4px; }
+    .msg-row.user .msg-group { align-items:flex-end; }
+    .msg-row.ai  .msg-group { align-items:flex-start; }
+    .bubble { padding:10px 14px;color:var(--text);font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word; }
+    .bubble.ai { background:var(--bubble-ai);border:1px solid rgba(255,255,255,0.1);border-radius:15px 15px 15px 3px; }
+    .bubble.user { background:var(--bubble-user);border:1px solid rgba(26,58,112,0.6);border-radius:15px 15px 3px 15px; }
+    .listen-btn { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 11px;color:#556a80;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:var(--mono);transition:all 0.2s; }
+    .listen-btn.playing { background:rgba(200,136,10,0.2);border-color:rgba(200,136,10,0.55);color:var(--gold); }
+    #loader { display:none; }
+    #loader.visible { display:flex;gap:7px;align-items:flex-start; }
+    .dot { width:6px;height:6px;background:var(--gold);border-radius:50%;animation:pulse 1.2s ease-in-out infinite; }
+    .dot:nth-child(2){animation-delay:.25s} .dot:nth-child(3){animation-delay:.5s}
+    #chips { padding:6px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0; }
+    .chip { background:rgba(200,136,10,0.09);border:1px solid rgba(200,136,10,0.28);border-radius:20px;padding:4px 12px;color:var(--gold);font-size:11px;cursor:pointer;font-family:var(--font);transition:background 0.2s; }
+    .chip:hover { background:rgba(200,136,10,0.18); }
+    #input-bar { padding:8px 12px;background:rgba(0,0,0,0.35);border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:7px;flex-shrink:0; }
+    #msg-input { flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:9px 13px;color:var(--text);font-size:14px;font-family:var(--font);resize:none;outline:none;line-height:1.5; }
+    #msg-input:focus { border-color:rgba(200,136,10,0.5);box-shadow:0 0 0 2px rgba(200,136,10,0.1); }
+    #send-btn { background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:42px;color:#fff;font-size:17px;cursor:not-allowed;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0; }
+    #send-btn.ready { background:linear-gradient(135deg,var(--gold),#a06800);cursor:pointer; }
+
+    /* QUESTIONS PANEL */
+    #q-panel, #f-panel { flex:1;overflow-y:auto;padding:12px;min-height:0;display:none; }
+    .q-info, .f-info { background:rgba(200,136,10,0.08);border:1px solid rgba(200,136,10,0.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;color:var(--gold);font-size:12px;line-height:1.65; }
+    .q-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:11px;padding:10px 12px;margin-bottom:7px;display:flex;gap:9px;align-items:center;transition:border-color 0.2s; }
+    .q-card:hover { border-color:rgba(200,136,10,0.3); }
+    .q-num { width:23px;height:23px;background:linear-gradient(135deg,#142847,#1a3a70);border:2px solid rgba(200,136,10,0.38);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:9px;font-weight:700;flex-shrink:0; }
+    .q-text { color:#b8cce0;font-size:13px;line-height:1.6;flex:1;word-break:break-word; }
+    .q-btns { display:flex;gap:5px;flex-shrink:0; }
+    .q-listen { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 8px;color:#5a7898;font-size:13px;cursor:pointer;transition:all 0.2s; }
+    .q-listen.playing { background:rgba(200,136,10,0.2);border-color:rgba(200,136,10,0.5);color:var(--gold); }
+    .q-train { background:linear-gradient(135deg,#1a3a70,#122858);border:1px solid rgba(200,136,10,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:12px;cursor:pointer;font-weight:700;transition:all 0.2s;font-family:var(--font); }
+    .q-train:disabled { background:rgba(255,255,255,0.04);color:#3a5878;cursor:not-allowed; }
+    .q-footer { background:rgba(60,20,120,0.12);border:1px solid rgba(60,20,120,0.25);border-radius:10px;padding:10px 12px;margin-top:6px;color:#a898cc;font-size:12px;line-height:1.7;text-align:center; }
+
+    /* FICHES */
+    .fiche-theme {
+      margin-bottom: 10px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .fiche-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.05);
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .fiche-header:hover { background: rgba(200,136,10,0.1); }
+    .fiche-header.open { background: rgba(26,58,112,0.5); border-bottom: 1px solid rgba(200,136,10,0.3); }
+    .fiche-icon { font-size: 18px; flex-shrink: 0; }
+    .fiche-title { color: #dce8f5; font-size: 14px; font-weight: 700; flex: 1; }
+    .fiche-header.open .fiche-title { color: var(--gold); }
+    .fiche-chevron { color: var(--text-dim); font-size: 12px; transition: transform 0.3s; flex-shrink: 0; }
+    .fiche-header.open .fiche-chevron { transform: rotate(180deg); color: var(--gold); }
+    .fiche-body {
+      display: none;
+      padding: 14px 16px;
+      background: rgba(0,0,0,0.2);
+    }
+    .fiche-body.open { display: block; }
+    .fiche-section { margin-bottom: 14px; }
+    .fiche-section:last-child { margin-bottom: 0; }
+    .fiche-subtitle {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-family: var(--mono);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(200,136,10,0.2);
+    }
+    .fiche-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      align-items: flex-start;
+    }
+    .fiche-bullet {
+      color: var(--gold);
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .fiche-text { color: #b8cce0; font-size: 13px; line-height: 1.65; }
+    .fiche-text strong { color: #dce8f5; font-weight: 700; }
+    .fiche-tag {
+      display: inline-block;
+      background: rgba(200,136,10,0.12);
+      border: 1px solid rgba(200,136,10,0.3);
+      border-radius: 20px;
+      padding: 2px 9px;
+      color: var(--gold);
+      font-size: 11px;
+      margin: 2px 2px 2px 0;
+      font-family: var(--mono);
+    }
+    .fiche-alert {
+      background: rgba(200,40,40,0.12);
+      border: 1px solid rgba(200,40,40,0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fca5a5;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .fiche-tip {
+      background: rgba(26,58,112,0.3);
+      border: 1px solid rgba(26,58,112,0.5);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #93b8d8;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width:3px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(200,136,10,0.28);border-radius:2px; }
+
+    @keyframes pulse { 0%,80%,100%{opacity:.28;transform:scale(.78)} 40%{opacity:1;transform:scale(1.18)} }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="header-logo">🎓</div>
+    <div id="header-info">
+      <div id="header-label">Préparation Oral · SAENES</div>
+      <div id="header-name">Coach Nayenka Gaye</div>
+      <div id="header-sub">Lycée Croce Spinelli · Paris · BOE · Note /20</div>
+    </div>
+    <div id="voice-badge">
+      <div id="voice-dot"></div>
+      <span id="voice-label">VOIX ♂</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab('chat')">💬 Coach IA</button>
+    <button class="tab" onclick="switchTab('questions')">📋 Questions</button>
+    <button class="tab" onclick="switchTab('fiches')">📚 Fiches</button>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div id="chat-panel" class="panel active">
+    <div id="error-bar">
+      <span id="error-text"></span>
+      <button id="error-close" onclick="hideError()">✕</button>
+    </div>
+    <div id="messages">
+      <div class="msg-row ai">
+        <div class="avatar ai">🎓</div>
+        <div class="msg-group">
+          <div class="bubble ai">Bonjour Nayenka.
+
+Je suis ton coach IA pour l'oral SAENES.
+
+• Onglet "Questions" → Entraîner : je t'interroge comme l'examinateur
+• Onglet "Fiches" → révise chaque thème en détail
+• Ou pose-moi une question de cours directement
+
+Par où tu commences ?</div>
+          <button class="listen-btn" onclick="speakMsg(this, this.previousElementSibling.textContent)">🔊 Écouter</button>
+        </div>
+      </div>
+    </div>
+    <div id="loader">
+      <div class="avatar ai">🎓</div>
+      <div class="bubble ai" style="display:flex;gap:5px;align-items:center;padding:10px 16px">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+    <div id="chips">
+      <button class="chip" onclick="sendChip(this)">Explique les principes du service public</button>
+      <button class="chip" onclick="sendChip(this)">Interroge-moi sur le FIPHFP</button>
+      <button class="chip" onclick="sendChip(this)">C'est quoi un EREA ?</button>
+      <button class="chip" onclick="sendChip(this)">Mes droits en tant que BOE ?</button>
+    </div>
+    <div id="input-bar">
+      <textarea id="msg-input" rows="2" placeholder="Tape ta réponse ou ta question... (Entrée = envoyer)" oninput="updateSendBtn()" onkeydown="handleKey(event)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">▶</button>
+    </div>
+  </div>
+
+  <!-- QUESTIONS PANEL -->
+  <div id="q-panel">
+    <div class="q-info">
+      <strong>Entraîner</strong> : l'IA t'interroge comme l'examinateur → tu réponds → note sur 20.<br/>
+      🔊 : entendre la question en voix masculine.
+    </div>
+    <div id="questions-list"></div>
+    <div class="q-footer">Évaluations <strong>objectives, notées sur 20</strong> — comme un vrai jury SAENES.</div>
+  </div>
+
+  <!-- FICHES PANEL -->
+  <div id="f-panel">
+    <div class="f-info">
+      📚 Clique sur un thème pour ouvrir la fiche. Tout ce que le jury peut demander.
+    </div>
+    <div id="fiches-list"></div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+const QUESTIONS = [
+  "Quelles sont les obligations des employeurs en matière de recrutement de travailleurs en situation de handicap ?",
+  "Qui était Croce Spinelli ?",
+  "Quelles sont les particularités d'un EREA ?",
+  "Quels sont les grands principes du service public ?",
+  "Quelles sont les qualités d'un bon chef ?",
+  "Quelles sont les qualités d'un bon secrétaire administratif ?",
+  "Quels sont les droits et obligations des fonctionnaires ?",
+  "Quels sont les actes administratifs des EPLE pouvant faire l'objet d'une dématérialisation ?",
+  "Quels sont les métiers d'un gestionnaire en EPLE ?",
+  "Quelle est la composition d'un conseil d'administration en EPLE ?",
+  "Quelles sont les compétences du conseil d'administration en EPLE ?",
+  "Que signifie GFC ?",
+  "À quelle période le budget de l'EPLE est-il voté ?",
+  "Quel est le statut des AED ?",
+  "Quel est le statut des AESH ?",
+  "Qu'est-ce que le FIPHFP ? Quel est son pendant dans le secteur privé ?",
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FICHES DE RÉVISION
+// ══════════════════════════════════════════════════════════════════════════════
+const FICHES = [
+  {
+    icon: "🏛️",
+    titre: "Les grands principes du service public",
+    sections: [
+      {
+        subtitle: "Les 3 lois de Rolland (juriste du XXe siècle)",
+        items: [
+          { label: "Continuité", text: "Le service public ne peut pas s'interrompre. Limite le droit de grève dans certains services essentiels. Exemple : l'hôpital fonctionne 24h/24." },
+          { label: "Égalité", text: "Tous les usagers sont traités de façon identique. Pas de discrimination. Tarification identique pour un même service." },
+          { label: "Adaptabilité (mutabilité)", text: "Le service public doit évoluer avec les besoins de la société. L'État peut modifier un service à tout moment. Les usagers n'ont pas de droit acquis au maintien d'un service." },
+        ]
+      },
+      {
+        subtitle: "2 principes complémentaires",
+        items: [
+          { label: "Neutralité", text: "Les agents ne doivent pas exprimer leurs opinions personnelles (politiques, religieuses, philosophiques) dans l'exercice de leurs fonctions." },
+          { label: "Laïcité", text: "Séparation de l'État et des religions. Loi de 1905. Les agents ne portent pas de signes religieux ostentatoires." },
+        ]
+      },
+      { subtitle: "À retenir", tags: ["Continuité", "Égalité", "Adaptabilité", "Neutralité", "Laïcité"] }
+    ],
+    alert: "⚠️ Attention : certains auteurs n'en citent que 3 (les lois de Rolland). Si l'examinateur demande les 3 lois de Rolland = continuité, égalité, adaptabilité uniquement.",
+  },
+  {
+    icon: "👩‍💼",
+    titre: "Droits et obligations des fonctionnaires",
+    sections: [
+      {
+        subtitle: "Les droits (Loi du 13 juillet 1983)",
+        items: [
+          { label: "Rémunération", text: "Droit à un traitement indiciaire selon le grade et l'échelon." },
+          { label: "Formation", text: "Droit à la formation professionnelle tout au long de la carrière." },
+          { label: "Protection fonctionnelle", text: "L'État protège l'agent en cas d'attaque ou de mise en cause dans l'exercice de ses fonctions." },
+          { label: "Droit syndical", text: "Liberté syndicale et droit de grève (avec restrictions pour certains corps)." },
+          { label: "Participation", text: "Élection de représentants dans les instances (CT, CHSCT, CAP)." },
+          { label: "Congés", text: "Congés annuels, maladie, maternité, formation, etc." },
+          { label: "Carrière", text: "Droit à l'avancement d'échelon et de grade." },
+        ]
+      },
+      {
+        subtitle: "Les obligations",
+        items: [
+          { label: "Obligation de service", text: "Assurer les fonctions confiées, respecter les horaires." },
+          { label: "Obéissance hiérarchique", text: "Suivre les ordres de sa hiérarchie, SAUF ordre manifestement illégal." },
+          { label: "Discrétion professionnelle", text: "Ne pas divulguer les informations obtenues dans l'exercice des fonctions." },
+          { label: "Neutralité / impartialité", text: "Traiter tous les usagers de façon égale, sans favoritisme." },
+          { label: "Obligation de réserve", text: "Modération dans l'expression publique des opinions personnelles." },
+          { label: "Non-cumul d'activités", text: "Interdit de cumuler avec une activité lucrative privée (sauf exceptions réglementées)." },
+        ]
+      },
+    ],
+    alert: "⚠️ En cas de manquement : procédure disciplinaire. Sanctions de l'avertissement à la révocation (8 sanctions dans la FP).",
+  },
+  {
+    icon: "🏫",
+    titre: "L'EPLE — Organisation et fonctionnement",
+    sections: [
+      {
+        subtitle: "Qu'est-ce qu'un EPLE ?",
+        items: [
+          { label: "Définition", text: "Établissement Public Local d'Enseignement. Dispose de la personnalité morale et de l'autonomie financière." },
+          { label: "Exemples", text: "Collèges, lycées, EREA, LP (lycées professionnels)." },
+          { label: "Tutelle", text: "État (Éducation Nationale) pour le pédagogique + collectivité territoriale (Région pour lycée, Département pour collège) pour les moyens matériels." },
+        ]
+      },
+      {
+        subtitle: "Le Conseil d'Administration (CA)",
+        items: [
+          { label: "Membres de droit", text: "Chef d'établissement (président), représentants de la collectivité de rattachement, représentant de la commune." },
+          { label: "Représentants personnels", text: "Personnel enseignement/éducation + personnel ATSS (administratifs, techniques, sociaux, santé)." },
+          { label: "Représentants usagers", text: "Parents d'élèves + élèves (lycée uniquement)." },
+          { label: "Nombre", text: "24 à 30 membres selon la taille. Répartis en 3 tiers égaux." },
+        ]
+      },
+      {
+        subtitle: "Compétences du CA",
+        items: [
+          { label: "Budget", text: "Vote le budget avant le 31 décembre, approuve le compte financier." },
+          { label: "Réglementaire", text: "Adopte le règlement intérieur, le projet d'établissement, le rapport annuel." },
+          { label: "Conventions", text: "Autorise le chef d'établissement à signer les conventions et contrats." },
+          { label: "Vie scolaire", text: "Sorties scolaires, hygiène et sécurité, actions éducatives." },
+        ]
+      },
+      { subtitle: "À retenir", tags: ["Budget voté avant le 31/12", "3 collèges", "Chef d'établissement = président", "Contrôle de légalité par le Rectorat"] }
+    ],
+    tip: "💡 Le CA délibère, mais c'est le chef d'établissement qui exécute les décisions.",
+  },
+  {
+    icon: "💰",
+    titre: "Budget et finances de l'EPLE",
+    sections: [
+      {
+        subtitle: "GFC — Gestion Financière et Comptable",
+        items: [
+          { label: "Définition", text: "Logiciel fourni par le ministère de l'Éducation Nationale pour gérer les finances des EPLE." },
+          { label: "Fonctions", text: "Saisie et exécution du budget, mandatement des dépenses, gestion des recettes, suivi des marchés publics, édition du compte financier, gestion de la régie (cantine, internat)." },
+          { label: "Utilisateurs", text: "Gestionnaire, agent comptable, SAENES en charge des finances." },
+        ]
+      },
+      {
+        subtitle: "Le cycle budgétaire",
+        items: [
+          { label: "Budget Initial (BI)", text: "Voté par le CA avant le 31 décembre N pour l'année N+1. Exercice = année civile." },
+          { label: "Décision Modificative (DM)", text: "Modifie le budget en cours d'année si nécessaire. Votée en CA." },
+          { label: "Compte Financier (CF)", text: "Bilan de fin d'année. Voté en CA avant le 30 juin de l'année N+1." },
+        ]
+      },
+    ],
+    alert: "⚠️ Si le budget n'est pas voté avant le 31 décembre : le chef d'établissement peut assurer les dépenses obligatoires en attendant un budget rectificatif.",
+  },
+  {
+    icon: "🔧",
+    titre: "Le gestionnaire en EPLE",
+    sections: [
+      {
+        subtitle: "5 grandes missions",
+        items: [
+          { label: "1. Finances", text: "Préparation et exécution du budget via GFC. Mandatement des factures. Régie de recettes (cantine, internat, photocopies)." },
+          { label: "2. Ressources Humaines", text: "Suivi des personnels ATSS, AED, AESH, contractuels. Gestion des absences, remplacements, contrats." },
+          { label: "3. Patrimoine et logistique", text: "Entretien et maintenance des locaux. Gestion des stocks et équipements. Suivi des marchés publics." },
+          { label: "4. Restauration et hébergement", text: "Organisation de la demi-pension et de l'internat. Suivi sanitaire et sécurité alimentaire." },
+          { label: "5. Sécurité", text: "Registres de sécurité, exercices d'évacuation, coordination avec services de secours." },
+        ]
+      },
+    ],
+    tip: "💡 Le gestionnaire est le bras droit du chef d'établissement pour tout ce qui n'est pas pédagogique.",
+  },
+  {
+    icon: "♿",
+    titre: "Handicap dans la Fonction Publique",
+    sections: [
+      {
+        subtitle: "L'obligation d'emploi (OETH)",
+        items: [
+          { label: "Quota", text: "Tout employeur de 20 agents ou plus doit employer 6% de travailleurs handicapés." },
+          { label: "DOETH", text: "Déclaration Obligatoire d'Emploi des Travailleurs Handicapés — déclaration annuelle." },
+          { label: "Si quota non atteint", text: "Contribution financière au FIPHFP (public) ou à l'AGEFIPH (privé)." },
+        ]
+      },
+      {
+        subtitle: "FIPHFP vs AGEFIPH",
+        items: [
+          { label: "FIPHFP", text: "Fonds pour l'Insertion des Personnes Handicapées dans la Fonction Publique. Créé en 2006. Géré par la Caisse des Dépôts et Consignations. Pour les 3 fonctions publiques (État, Territoriale, Hospitalière)." },
+          { label: "AGEFIPH", text: "Association de Gestion du Fonds pour l'Insertion Professionnelle des Personnes Handicapées. Même rôle mais pour le secteur PRIVÉ." },
+          { label: "Missions communes", text: "Financer les aménagements de poste, équipements spécialisés, formations, maintien dans l'emploi." },
+        ]
+      },
+      {
+        subtitle: "Les BOE — Bénéficiaires de l'Obligation d'Emploi",
+        items: [
+          { label: "Qui ?", text: "Travailleurs reconnus handicapés par la CDAPH (Commission des Droits et de l'Autonomie des Personnes Handicapées)." },
+          { label: "Autres BOE", text: "Victimes d'accidents du travail avec incapacité ≥ 10%, titulaires d'une pension d'invalidité, agents reconnus inaptes partiellement." },
+        ]
+      },
+      { subtitle: "À retenir", tags: ["6% DOETH", "FIPHFP = public", "AGEFIPH = privé", "BOE = bénéficiaire", "CDAPH"] }
+    ],
+  },
+  {
+    icon: "🎒",
+    titre: "AED et AESH — Statuts",
+    sections: [
+      {
+        subtitle: "AED — Assistant d'Éducation",
+        items: [
+          { label: "Nature", text: "Contractuel de droit public. CDD de 1 an renouvelable dans la limite de 6 ans." },
+          { label: "Recrutement", text: "Par le chef d'établissement. Condition : avoir le baccalauréat. Pas de concours." },
+          { label: "Missions", text: "Surveillance et encadrement des élèves, aide aux devoirs (études dirigées), permanences, internat, CDI." },
+          { label: "Rémunération", text: "Basée sur le SMIC, proratisée selon le temps de travail (souvent 75%)." },
+          { label: "Après 6 ans", text: "Pas de titularisation automatique. Peuvent passer des concours (SAENES…). CDI de droit public possible." },
+        ]
+      },
+      {
+        subtitle: "AESH — Accompagnant des Élèves en Situation de Handicap",
+        items: [
+          { label: "Nature", text: "Contractuel de droit public. CDD de 3 ans renouvelable une fois → CDI possible après 6 ans." },
+          { label: "Recrutement", text: "Par la DSDEN (Rectorat). Niveau BAC ou qualification dans le domaine du handicap (DEAES…)." },
+          { label: "Missions", text: "Accompagnement individuel d'élèves handicapés. Aide aux actes essentiels, déplacements, communication, sécurité, accès aux activités scolaires." },
+          { label: "Affectation", text: "Sur décision de la CDAPH. Peut accompagner plusieurs élèves (AESH mutualisé)." },
+        ]
+      },
+    ],
+    tip: "💡 Différence clé : AED = surveillance de tous les élèves / AESH = accompagnement spécifique d'élèves handicapés.",
+  },
+  {
+    icon: "🏗️",
+    titre: "L'EREA — Établissement Régional d'Enseignement Adapté",
+    sections: [
+      {
+        subtitle: "Définition et public",
+        items: [
+          { label: "Définition", text: "EPLE accueillant des élèves en situation de handicap (moteur, sensoriel, mental) ou en grande difficulté scolaire et sociale." },
+          { label: "Statut", text: "C'est un EPLE → dépend de l'Éducation Nationale (contrairement aux IME qui dépendent du médico-social)." },
+        ]
+      },
+      {
+        subtitle: "Particularités",
+        items: [
+          { label: "Internat", text: "Internat obligatoire possible — caractéristique principale qui distingue l'EREA d'une SEGPA." },
+          { label: "Enseignants", text: "Enseignants spécialisés titulaires du CAPPEI (Certificat d'Aptitude Professionnelle aux Pratiques de l'Éducation Inclusive)." },
+          { label: "Équipe", text: "Pluridisciplinaire : enseignants, éducateurs, psychologues, rééducateurs." },
+          { label: "Formation", text: "Formations professionnelles adaptées — CAP essentiellement." },
+        ]
+      },
+    ],
+    tip: "💡 EREA ≠ SEGPA : la SEGPA est une section dans un collège ordinaire. L'EREA est un établissement autonome avec internat.",
+  },
+  {
+    icon: "📜",
+    titre: "Dématérialisation des actes en EPLE",
+    sections: [
+      {
+        subtitle: "Définition",
+        items: [
+          { label: "Dématérialisation", text: "Remplacement des documents papier par des documents numériques ayant la même valeur juridique." },
+        ]
+      },
+      {
+        subtitle: "Actes dématérialisables",
+        items: [
+          { label: "Délibérations", text: "Délibérations du Conseil d'Administration." },
+          { label: "Actes budgétaires", text: "Budget initial, décisions modificatives, compte financier." },
+          { label: "Conventions", text: "Partenariats, stages, conventions diverses." },
+          { label: "Contrats", text: "Contrats aidés, CDD, contrats de prestataires." },
+          { label: "Actes d'achat", text: "Bons de commande, marchés publics." },
+          { label: "RH", text: "Actes relatifs aux ressources humaines." },
+        ]
+      },
+      {
+        subtitle: "Avantages",
+        items: [
+          { label: "Gain", text: "Gain de temps, réduction des coûts, archivage sécurisé, traçabilité." },
+          { label: "Transmission", text: "Envoi rapide à l'autorité de contrôle (Rectorat, Région/Département) pour le contrôle de légalité." },
+        ]
+      },
+    ],
+  },
+  {
+    icon: "🏛️",
+    titre: "Croce Spinelli — Histoire du lycée",
+    sections: [
+      {
+        subtitle: "Joseph Croce-Spinelli (1845–1875)",
+        items: [
+          { label: "Qui ?", text: "Aéronaute français du XIXe siècle. PAS un astronaute — un aéronaute (ballon à gaz)." },
+          { label: "Sa mort", text: "Décédé le 15 avril 1875 lors de la catastrophe du ballon Le Zénith. Il tentait de battre un record d'altitude." },
+          { label: "L'ascension", text: "Avec ses compagnons Sivel et Tissandier. L'ascension dépassa 8 000 mètres. Croce-Spinelli et Sivel moururent d'hypoxie (manque d'oxygène). Tissandier survécut." },
+        ]
+      },
+      {
+        subtitle: "Le lycée",
+        items: [
+          { label: "Localisation", text: "Lycée polyvalent situé dans le 18e arrondissement de Paris." },
+          { label: "Nom", text: "Porte le nom de l'aéronaute en hommage à son courage." },
+        ]
+      },
+    ],
+    alert: "⚠️ Attention très fréquente : Croce-Spinelli N'EST PAS un astronaute. C'est un aéronaute du XIXe siècle (ballon, pas fusée).",
+  },
+  {
+    icon: "⭐",
+    titre: "Qualités d'un bon chef / bon secrétaire administratif",
+    sections: [
+      {
+        subtitle: "Qualités d'un bon chef",
+        items: [
+          { label: "Management", text: "Leadership, capacité à fédérer et motiver, délégation efficace, équité entre les agents." },
+          { label: "Professionnel", text: "Maîtrise des textes réglementaires, sens des responsabilités, exemplarité, rigueur." },
+          { label: "Relationnel", text: "Écoute, communication claire, gestion des conflits, disponibilité, bienveillance sans faiblesse." },
+          { label: "Éthique", text: "Neutralité, impartialité, discrétion, loyauté envers l'institution." },
+        ]
+      },
+      {
+        subtitle: "Qualités d'un bon secrétaire administratif (SAENES)",
+        items: [
+          { label: "Technique", text: "Maîtrise bureautique (Word, Excel, GFC, SIRHIUS), connaissance des textes réglementaires, rédaction administrative rigoureuse." },
+          { label: "Organisation", text: "Rigueur, méthode, sens des priorités, fiabilité, respect des délais, anticipation." },
+          { label: "Relationnel", text: "Sens du service aux usagers (élèves, parents), discrétion, esprit d'équipe, adaptabilité." },
+          { label: "Éthique", text: "Neutralité, probité (honnêteté), loyauté, secret professionnel." },
+        ]
+      },
+    ],
+    tip: "💡 Le SAENES est souvent l'interface entre le public et l'administration : la première impression compte.",
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════════════════════════
+let chatHistory = [];
+let isLoading = false;
+
+async function callAPI(messages) {
+  const response = await fetch("/.netlify/functions/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+  if (!data.reply) throw new Error("Réponse vide");
+  return data.reply;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TTS
+// ══════════════════════════════════════════════════════════════════════════════
+let ttsSupported = false;
+let maleVoice = null;
+let currentBtn = null;
+
+function initTTS() {
+  if (!window.speechSynthesis) return;
+  ttsSupported = true;
+  const loadVoices = () => {
+    const voices = speechSynthesis.getVoices();
+    const fr = voices.filter(v => v.lang.startsWith("fr"));
+    const enhanced = fr.filter(v => v.name.toLowerCase().includes("enhanced") || v.name.toLowerCase().includes("premium"));
+    const premium = ["Thomas","Google français","Microsoft Paul","Pierre","Nicolas","Daniel","Luc","Jacques","Claude"];
+    maleVoice = enhanced[0] || fr.find(v => premium.some(n => v.name.includes(n))) || fr[0] || voices[0] || null;
+  };
+  loadVoices();
+  speechSynthesis.addEventListener("voiceschanged", loadVoices);
+}
+
+function cleanForSpeech(text) {
+  return text
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+    .replace(/[✅❌⚠️🎓💪🌟🏆💡🔊⏹▶⏳⚖️🎯📋•·]/g, "")
+    .replace(/\*\*/g, "").replace(/\*/g, "").replace(/#{1,6} /g, "")
+    .replace(/^[-–]\s+/gm, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function speakMsg(btn, text) {
+  if (!ttsSupported) return;
+  if (currentBtn === btn && speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    btn.classList.remove("playing");
+    btn.innerHTML = btn.classList.contains("q-listen") ? "🔊" : "🔊 Écouter";
+    currentBtn = null; updateVoiceBadge(false); return;
+  }
+  if (currentBtn) {
+    currentBtn.classList.remove("playing");
+    currentBtn.innerHTML = currentBtn.classList.contains("q-listen") ? "🔊" : "🔊 Écouter";
+  }
+  speechSynthesis.cancel();
+  const clean = cleanForSpeech(text);
+  if (!clean) return;
+  btn.classList.add("playing");
+  btn.innerHTML = btn.classList.contains("q-listen") ? "⏹" : "⏹ Stop";
+  currentBtn = btn; updateVoiceBadge(true);
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = "fr-FR"; u.rate = 0.95; u.pitch = 0.9; u.volume = 1;
+  if (maleVoice) u.voice = maleVoice;
+  u.onend = u.onerror = () => {
+    btn.classList.remove("playing");
+    btn.innerHTML = btn.classList.contains("q-listen") ? "🔊" : "🔊 Écouter";
+    if (currentBtn === btn) currentBtn = null;
+    updateVoiceBadge(false);
+  };
+  speechSynthesis.speak(u);
+}
+
+function updateVoiceBadge(active) {
+  const badge = document.getElementById("voice-badge");
+  const label = document.getElementById("voice-label");
+  badge.classList.toggle("active", active);
+  label.textContent = active ? "VOIX ▶" : (ttsSupported ? "VOIX ♂" : "NO TTS");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════════════════════════════════════════════════
+function addMessage(role, content) {
+  const container = document.getElementById("messages");
+  const row = document.createElement("div");
+  row.className = `msg-row ${role === "user" ? "user" : "ai"}`;
+  if (role === "assistant") {
+    row.innerHTML = `<div class="avatar ai">🎓</div><div class="msg-group"><div class="bubble ai">${escHtml(content)}</div>${ttsSupported ? `<button class="listen-btn" onclick="speakMsg(this, this.previousElementSibling.textContent)">🔊 Écouter</button>` : ""}</div>`;
+  } else {
+    row.innerHTML = `<div class="msg-group"><div class="bubble user">${escHtml(content)}</div></div><div class="avatar user">👩</div>`;
+  }
+  container.appendChild(row);
+  row.scrollIntoView({ behavior:"smooth", block:"end" });
+  return row;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\n/g,"<br/>");
+}
+
+function setLoading(on) {
+  isLoading = on;
+  document.getElementById("loader").className = on ? "visible" : "";
+  if (on) document.getElementById("loader").scrollIntoView({ behavior:"smooth", block:"end" });
+  updateSendBtn();
+  document.querySelectorAll(".q-train").forEach(b => b.disabled = on);
+}
+
+function showError(msg) { document.getElementById("error-text").textContent = msg; document.getElementById("error-bar").classList.add("visible"); }
+function hideError() { document.getElementById("error-bar").classList.remove("visible"); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ENVOI
+// ══════════════════════════════════════════════════════════════════════════════
+async function sendMessage(overrideText) {
+  const input = document.getElementById("msg-input");
+  const text = (overrideText || input.value).trim();
+  if (!text || isLoading) return;
+  input.value = ""; updateSendBtn(); hideError();
+  if (speechSynthesis) speechSynthesis.cancel();
+  addMessage("user", text);
+  chatHistory.push({ role:"user", content:text });
+  setLoading(true);
+  try {
+    const reply = await callAPI(chatHistory);
+    chatHistory.push({ role:"assistant", content:reply });
+    const row = addMessage("assistant", reply);
+    const btn = row.querySelector(".listen-btn");
+    if (btn) setTimeout(() => speakMsg(btn, reply), 300);
+  } catch(e) {
+    showError(e.message);
+    chatHistory.pop();
+    addMessage("assistant", "⚠️ Erreur : " + e.message);
+  } finally { setLoading(false); }
+}
+
+function sendChip(btn) { sendMessage(btn.textContent); }
+function handleKey(e) { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function updateSendBtn() {
+  const input = document.getElementById("msg-input");
+  const btn = document.getElementById("send-btn");
+  const ready = input.value.trim().length > 0 && !isLoading;
+  btn.classList.toggle("ready", ready);
+  btn.textContent = isLoading ? "⏳" : "▶";
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((t,i) => {
+    t.classList.toggle("active", (i===0&&name==="chat")||(i===1&&name==="questions")||(i===2&&name==="fiches"));
+  });
+  document.getElementById("chat-panel").classList.toggle("active", name==="chat");
+  document.getElementById("q-panel").style.display = name==="questions" ? "block" : "none";
+  document.getElementById("f-panel").style.display = name==="fiches" ? "block" : "none";
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function buildQuestions() {
+  const list = document.getElementById("questions-list");
+  QUESTIONS.forEach((q,i) => {
+    const card = document.createElement("div");
+    card.className = "q-card";
+    card.innerHTML = `<div class="q-num">${i+1}</div><div class="q-text">${escHtml(q)}</div><div class="q-btns">${ttsSupported?`<button class="q-listen" title="Écouter" onclick="speakMsg(this,'${q.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">🔊</button>`:""}<button class="q-train" onclick="trainOnQuestion('${q.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">Entraîner</button></div>`;
+    list.appendChild(card);
+  });
+}
+
+function trainOnQuestion(q) {
+  if (isLoading) return;
+  switchTab("chat");
+  if (speechSynthesis) speechSynthesis.cancel();
+  sendMessage(`Interroge-moi sur cette question exactement comme un examinateur du jury SAENES, de façon formelle et directe : "${q}"`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FICHES
+// ══════════════════════════════════════════════════════════════════════════════
+function buildFiches() {
+  const list = document.getElementById("fiches-list");
+  FICHES.forEach((fiche, fi) => {
+    const div = document.createElement("div");
+    div.className = "fiche-theme";
+
+    let sectionsHtml = "";
+    fiche.sections.forEach(sec => {
+      if (sec.tags) {
+        sectionsHtml += `<div class="fiche-section"><div class="fiche-subtitle">${escHtml(sec.subtitle)}</div><div>${sec.tags.map(t=>`<span class="fiche-tag">${escHtml(t)}</span>`).join("")}</div></div>`;
+      } else {
+        const itemsHtml = (sec.items||[]).map(item =>
+          `<div class="fiche-item"><div class="fiche-bullet">▸</div><div class="fiche-text"><strong>${escHtml(item.label)}</strong> — ${escHtml(item.text)}</div></div>`
+        ).join("");
+        sectionsHtml += `<div class="fiche-section"><div class="fiche-subtitle">${escHtml(sec.subtitle)}</div>${itemsHtml}</div>`;
+      }
+    });
+
+    const alertHtml = fiche.alert ? `<div class="fiche-alert">${escHtml(fiche.alert)}</div>` : "";
+    const tipHtml   = fiche.tip   ? `<div class="fiche-tip">${escHtml(fiche.tip)}</div>` : "";
+
+    div.innerHTML = `
+      <div class="fiche-header" onclick="toggleFiche(this)">
+        <span class="fiche-icon">${fiche.icon}</span>
+        <span class="fiche-title">${escHtml(fiche.titre)}</span>
+        <span class="fiche-chevron">▼</span>
+      </div>
+      <div class="fiche-body">
+        ${sectionsHtml}
+        ${alertHtml}
+        ${tipHtml}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function toggleFiche(header) {
+  header.classList.toggle("open");
+  header.nextElementSibling.classList.toggle("open");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+initTTS();
+buildQuestions();
+buildFiches();
+document.getElementById("q-panel").style.display = "none";
+document.getElementById("f-panel").style.display = "none";
+</script>
+</body>
+</html>
